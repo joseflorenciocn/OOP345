@@ -1,0 +1,187 @@
+Script started on Fri 20 Apr 2018 10:48:41 PM EDT
+jcoelho-neto@matrix:~/OOP345/w9> whoami
+jcoelho-neto
+jcoelho-neto@matrix:~/OOP345/w9> cat SecureData.cpp 
+// Workshop 10 - Multi-Threading
+// SecureData.cpp
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include "SecureData.h"
+
+namespace w10 {
+
+	void converter(char* t, char key, int n, const Cryptor& c) {
+		for (int i = 0; i < n; i++)
+			t[i] = c(t[i], key);
+	}
+
+	SecureData::SecureData(const char* file, char key) {
+		// open text file
+		std::fstream input(file, std::ios::in);
+
+		if (!input)
+			throw std::string("\n***Failed to open file ") +
+			std::string(file) + std::string(" ***\n");
+
+		// copy from file into memory
+		nbytes = 0;
+		input >> std::noskipws;
+		while (input.good()) {
+			char c;
+			input >> c;
+			nbytes++;
+		}
+		nbytes--;
+		input.clear();
+		input.seekg(0, std::ios::beg);
+		text = new char[nbytes + 1];
+
+		int i = 0;
+		while (input.good())
+			input >> text[i++];
+		text[--i] = '\0';
+		std::cout << "\n" << nbytes << " bytes copied from text "
+			<< file << " into memory (null byte added)\n";
+		encoded = false;
+
+		// encode using key
+		code(key);
+		std::cout << "Data encrypted in memory\n";
+	}
+
+	SecureData::~SecureData() {
+		delete[] text;
+	}
+
+	void SecureData::display(std::ostream& os) const {
+		if (text && !encoded)
+			os << text << std::endl;
+		else if (encoded)
+			throw std::string("\n***Data is encoded***\n");
+		else
+			throw std::string("\n***No data stored***\n");
+	}
+
+	void SecureData::code(char key) {
+		converter(text, key, nbytes, Cryptor());
+		encoded = !encoded;
+	}
+
+	void SecureData::backup(const char* file) {
+		if (!text)
+			throw std::string("\n***No data stored***\n");
+		else if (!encoded)
+			throw std::string("\n***Data is not encoded***\n");
+		else {
+			// open binary file
+			std::ofstream myFile(file, std::ios::out | std::ios::binary);
+
+			// write binary file here
+			myFile.write(text, nbytes);
+			//myFile.close();
+
+		}
+	}
+
+	void SecureData::restore(const char* file, char key) {
+		// open binary file
+		std::ifstream myFile(file, std::ios::in | std::ios::binary);
+
+		// allocate memory here
+		//size_t size = 0;
+	//	std::streampos size;
+		//char * teste1;
+	//	size = myFile.tellg();
+		text = new char[nbytes];
+
+		// read binary file here
+		//myFile.seekg(0, std::ios::beg);
+		myFile.read(text, nbytes);
+		//myFile.close();
+
+		std::cout << "\n" << nbytes + 1 << " bytes copied from binary file "
+			<< file << " into memory (null byte included)\n";
+		encoded = true;
+
+		// decode using key
+		code(key);
+		std::cout << "Data decrypted in memory\n\n";
+	}
+
+	std::ostream& operator<<(std::ostream& os, const SecureData& sd) {
+		sd.display(os);
+		return os;
+	}
+
+}jcoelho-neto@matrix:~/OOP345/w9> cat w9.cpp 
+// Workshop 10 - Multi-Threading
+// w10.cpp
+
+#include <iostream>
+#include <string>
+#include "SecureData.h"
+
+int main(int argc, char** argv) {
+	std::cout << "\nCommand Line : ";
+	for (int i = 0; i < argc; i++) {
+		std::cout << argv[i] << ' ';
+	}
+	std::cout << std::endl;
+	if (argc != 4) {
+		std::cerr << "\n***Incorrect number of arguments***\n";
+		return 1;
+	}
+	char key = argv[3][0];
+
+	try {
+		w10::SecureData sd(argv[1], key);
+		sd.backup(argv[2]);
+
+		sd.restore(argv[2], key);
+		std::cout << sd << std::endl;
+
+	}
+	catch (const std::string& msg) {
+		std::cerr << msg << std::endl;
+	}
+
+	std::cout << "\nPress any key to continue ... ";
+	std::cin.get();
+}jcoelho-neto@matrix:~/OOP345/w9> cat w9.cpp [8@SecureData[C[C[C[C[Cwhoami[Kcat SecureData.cpp [8Pw9[C[C[C[C[C[Kcat w9.cpp [8@SecureData[C[C[C[C[Cwhoami[K[2Pexitw8 Description.txt Badprices.txt [3Pg++ -std=c++0x -o w8 main.cpp[C[17Pcat[C[C[C[C[C[C[C[C[C[C[17@g++ -std=c++0x -o w8[C[C[C[C[C[C[C[C[C[C[K[K[1@9[1P main.cp[C[C[C[C[C[C[C[Cp SecureData.cpp 
+g++: error: main.cpp: No such file or directory
+jcoelho-neto@matrix:~/OOP345/w9> g++ -std=c++0x -o w9 main.cpp SecureData.cpp [C[C[1P[1P[1P[1P[1@w[1@9
+jcoelho-neto@matrix:~/OOP345/w9> g++ -std=c++0x -o w9 w9.cpp SecureData.cpp [2@main[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat w9.cpp [K[8@SecureData[C[C[C[C[Cwhoami[K[2Pexitw8 Description.txt Badprices.txt exit[Kwhoamicat SecureData.cpp [8Pw9[C[C[C[C[C[34@g++ -std=c++0x -o w9 main.cpp SecureData[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat w9.cpp [K[8@SecureData[C[C[C[C[Cwhoami[K[2Pexitw8 Description.txt Badprices.txt [3Pg++ -std=c++0x -o w8 main.cpp[C[17Pcat[C[C[C[C[C[C[C[C[C[C[2PList.h[C[3@Elemen[C[C[C[C[8Pwhoami[2Pexitw7 grade.txt pg++ -std=c++0x -o w7 main.cpp [16Pw7 grade.txt p[K[8Pexitwhoamicat Element.h [3PLis[C[C[C[C[2@main.cpp[C[17@g++ -std=c++0x -o w8[C[C[C[C[C[C[C[C[C[C[3@w8 Description.txt Badprices.txt[Cexit[Kwhoamicat SecureData.cpp [8Pw9[C[C[C[C[C[34@g++ -std=c++0x -o w9 main.cpp SecureData[C[C[C[C[C[2Pw9[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Kg++ -std=c++0x -o w9 w9.cpp SecureData.cpp [2@main[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat w9.cpp [K[8@SecureData[C[C[C[C[Cwhoami[K[2Pexitw8 Description.txt Badprices.txt [3Pg++ -std=c++0x -o w8 main.cpp[C[17Pcat[C[C[C[C[C[C[C[C[C[C[2PList.h[C[2@main.cpp[C[17@g++ -std=c++0x -o w8[C[C[C[C[C[C[C[C[C[C[3@w8 Description.txt Badprices.txt[Cexit[Kwhoamicat SecureData.cpp [8Pw9[C[C[C[C[C[34@g++ -std=c++0x -o w9 main.cpp SecureData[C[C[C[C[C[2Pw9[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Kw9 w
+w10_text.dat   w9             w9.cpp         w9_script.txt  
+jcoelho-neto@matrix:~/OOP345/w9> w9 w10_text.dat encoded.dat %
+
+Command Line : w9 w10_text.dat encoded.dat % 
+
+950 bytes copied from text w10_text.dat into memory (null byte added)
+Data encrypted in memory
+
+951 bytes copied from binary file encoded.dat into memory (null byte included)
+Data decrypted in memory
+
+ Compound types are types that a programmer constructs from a language's
+ fundamental types and/or other compound types.  In C++11, compound types 
+ include pointers and references to existing types, enumerations of named 
+ constant values, arrays of objects of an existing type, classes and function
+ types.  C++11 clarified the difference between lvalues and rvalues and 
+ references to each, which helped simplify many of the facilities available
+ in the standard library.
+
+ This chapter describes the non-function types in detail.  The description 
+ includes a review of one-dimensional arrays in both static and dynamic memory
+ and shows how to allocate multi-dimensional arrays in both static and dynamic
+ memory.  The description of classes reviews class definitions, introduces
+ move-constructors and move-assignment operators and includes declarations of
+ special members such as bit fields, class variables and class functions.
+
+
+Press any key to continue ... 
+jcoelho-neto@matrix:~/OOP345/w9> exit
+exit
+
+Script done on Fri 20 Apr 2018 10:50:33 PM EDT
