@@ -1,0 +1,18 @@
+Script started on Fri 26 Jan 2018 08:15:26 PM EST
+jcoelho-neto@matrix:~/OOP345/w1> whoami
+jcoelho-neto
+jcoelho-neto@matrix:~/OOP345/w1> cat w1_cpp.cpp
+cat: w1_cpp.cpp: No such file or directory
+jcoelho-neto@matrix:~/OOP345/w1> cat w1_cpp.cpp[8Pwhoami[2Pexit[2Pw1 oop345 btp305g++ -o w1 w1.cpp CString.cpp process.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat w1.cpp[Kg++ -o w1 w1.cpp CString.cpp process.cpp
+jcoelho-neto@matrix:~/OOP345/w1> g++ -o w1 w1.cpp CString.cpp process.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[26Pcat w1_cpp.cpp[8Pwhoami[2Pexit[2Pw1 oop345 btp305g++ -o w1 w1.cpp CString.cpp process.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[24Pw1 oop345 btp305
+Command Line : w1 oop345 btp305 
+Maximum number of characters stored: 3
+0: oop
+1: btp
+jcoelho-neto@matrix:~/OOP345/w1> w1 oop345 btp305g++ -o w1 w1.cpp CString.cpp process.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[26Pcat w1_cpp.cpp[8Pwhoami[2Pexit[2Pw1 oop345 btp305[K
+Command Line : w1 
+Insufficient number of arguments (min 1)
+jcoelho-neto@matrix:~/OOP345/w1> exit
+exit
+
+Script done on Fri 26 Jan 2018 08:16:28 PM EST
