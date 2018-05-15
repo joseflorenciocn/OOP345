@@ -1,0 +1,134 @@
+Script started on Tue 13 Feb 2018 10:09:06 PM EST
+jcoelho-neto@matrix:~/OOP345/w3> whoami
+jcoelho-neto
+jcoelho-neto@matrix:~/OOP345/w3> cat w[KKVList.h 
+#ifndef KVLIST_H
+#define KVLIST_H
+
+template <typename K, typename V, int N>
+
+class KVList
+{
+public:
+
+	//COnstructor
+	KVList() : msize{ 0 } {}
+	
+	//Function to return the size of elements
+	size_t size() const { return this->msize; }
+	
+	//Function to return the Key element
+	const K& key(int i) const { return m_key[i]; }
+	
+	//Function to return the Value element
+	const V& value(int i) const { return m_value[i]; }
+	
+	//Function to add elements
+	KVList& add(const K& k, const V& v)
+	{
+		if (msize < N)
+		{
+			m_key[msize] = k;
+			m_value[msize] = v;
+			msize++;
+		}
+
+		return *this;
+	}
+	
+	//Function to find the index of Key element, if didnt find
+	// return index 0
+	int find(const K& k) const
+	{
+
+		for (int t = 0; t < msize; t++)
+		{
+			if (this->m_key[t] == k) return t;
+		}
+
+		return 0;
+
+		
+	}
+	
+	//Function to replace elements in the object
+	KVList& replace(int i, const K& k, const V& v)
+	{
+		this->m_key[i] = k;
+		this->m_value[i] = v;
+
+		return *this;
+
+	}
+
+private:
+	K m_key[N];
+	V m_value[N];
+	int msize;
+
+};
+
+
+#endif
+
+jcoelho-neto@matrix:~/OOP345/w3> cat KVList.h [7Pwhoamivim w3.cpp [1@rm KVList.h[Cls[Kcd OOP345/w3w2[Klscd teste2/..[Kteste2/ls[Kw2cd OOP345/w3ls[Krm KVList.h [1Pvim w3.cpp[C[5Pwhoamicat KVList.h [7Pwhoamivim w3.cpp [1@rm KVList.h[Cls[Kcd OOP345/w3ls[Krm KVList.h [1Pvim w3.cpp[C[5Pwhoamicat KVList.h [Kg++ -o w3 w3.cpp
+In file included from w3.cpp:7:0:
+KVList.h: In constructor ‘KVList<K, V, N>::KVList()’:
+KVList.h:11:13: warning: extended initializer lists only available with -std=c++0x or -std=gnu++0x [enabled by default]
+jcoelho-neto@matrix:~/OOP345/w3> g++ -o w3 w3.cpp[C[C[C[C[C[1@-[1@s[1@t[1@d[1@=[1@c[1@+[1@+[1@0[1@x[1@ 
+jcoelho-neto@matrix:~/OOP345/w3> w3
+
+Inventory
+=========
+Product : Pizza
+Price : 4.49
+Product : Pierogi
+Price : 2.56
+Product : Potato Choi  ips
+Price : 2.29
+Product : Black Tea
+Price : 4.49
+Product : GreenTea    Tea
+Price : 3.46
+Product : Fruit Tea
+Price : 2.29
+Product : quit
+
+Price List
+----------
+        Pizza : 4.49
+      Pierogi : 2.56
+ Potato Chips : 2.29
+    Black Tea : 4.49
+    Green Tea : 3.46
+
+Corrections
+-----------
+Product : Black Tea
+Price : 5.29
+Product : quit
+
+Price List
+----------
+        Pizza : 4.49
+      Pierogi : 2.56
+ Potato Chips : 2.29
+    Black Tea : 5.29
+    Green Tea : 3.46
+
+Glossary
+========
+Key : CPU
+Definition : central processing unit
+Key : ALU
+Definition : arithmetic logic unit
+Key : quit
+
+Entries
+-------
+  CPU : central processing unit
+  ALU : arithmetic logic unit
+jcoelho-neto@matrix:~/OOP345/w3> exit
+exit
+
+Script done on Tue 13 Feb 2018 10:13:30 PM EST
