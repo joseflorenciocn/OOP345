@@ -1,0 +1,277 @@
+Script started on Fri 20 Apr 2018 10:40:09 PM EDT
+jcoelho-neto@matrix:~/OOP345/w6> whi[Koami
+jcoelho-neto
+jcoelho-neto@matrix:~/OOP345/w6> cat iProduct.h 
+#ifndef W7_IPRODUCT_H_
+#define W7_IPRODUCT_H_
+
+// Workshop 7 - STL Containers
+// iProduct.h
+
+#include <iostream>
+#include <fstream>
+
+namespace w7 {
+
+	class iProduct {
+	public:
+		virtual double getCharge() const = 0;
+		virtual void display(std::ostream&) const = 0;
+	};
+
+	std::ostream& operator<<(std::ostream&, const iProduct&);
+	iProduct* readProduct(std::ifstream&);
+
+}
+#endif
+jcoelho-neto@matrix:~/OOP345/w6> cat Product.cpp 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include "Product.h"
+
+namespace w7 {
+
+	Product::Product(int id, double price)
+	{
+		m_id = id;
+		m_price = price;	
+	}
+
+
+	double Product::getCharge() const
+	{
+
+		return m_price;
+
+	}
+	void Product::display(std::ostream& out) const 
+	{
+		out.setf(std::ios::right);
+		out.width(10);
+		out << m_id;
+
+		out.setf(std::ios::left);
+		out.width(10);
+		out << m_price;
+	}
+
+
+}
+jcoelho-neto@matrix:~/OOP345/w6> cat Sale.cpp 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <iomanip>
+#include "Sale.h"
+
+
+
+namespace w7
+{
+
+	Sale::Sale(const char* filename)
+	{
+
+		std::ifstream file;
+		file.open(filename);
+
+		try
+		{
+			if (file.is_open())
+			{
+				do
+				{
+					
+					iProduct* tmp = readProduct(file);
+					prod.push_back(tmp);
+
+				} while (file);
+			}
+			else
+			{
+				throw "File doesn't open";
+			}
+		}
+		catch (const char* message)
+		{
+			std::cout << "Error in: " << message << std::endl;
+		}
+
+	}
+	
+	void Sale::display(std::ostream& out) const
+	{
+		
+		out << "Product No      Cost Taxable" << std::endl;
+		out.width(10);
+
+		for (int i = 0; i < prod.size(); i++)
+		{
+			prod[i]->display(out);
+		}
+		
+		out.setf(std::ios::right);
+		out.width(10);
+		out << "Total:";
+		double total = 0;
+		
+		for (int i = 0; i < prod.size(); i++)
+		{
+			
+			total += prod[i]->getCharge();
+		}
+		
+	//	total = round (total);
+		
+		out.setf(std::ios::left);
+		out.width(10);
+		out << std::fixed << std::setprecision(2) << total << std::endl;
+	}
+	
+	
+	
+iProduct* readProduct(std::ifstream& file)
+{
+
+	iProduct* tmp;
+
+
+	try
+	{
+		if (file.is_open())
+		{
+			int id_tmp = 0;
+			double price_tmp = 0;
+			std::string msg;
+
+			file >> id_tmp;
+			file >> price_tmp;
+			getline(file, msg);
+
+			tmp = new TaxableProduct(id_tmp, price_tmp, msg);
+
+		}
+
+		else
+		{
+			throw "File doesn't open";
+		}
+	}
+
+	catch (const char* message)
+	{
+		std::cout << "Error in: " << message << std::endl;
+	}
+
+
+	return tmp;
+
+}
+	
+
+
+}
+
+
+jcoelho-neto@matrix:~/OOP345/w6> cat TaxableProduct.cpp 
+#include <iostream>
+#include <string>
+#include "TaxableProduct.h"
+
+namespace w7 
+{
+
+	TaxableProduct::TaxableProduct(int id, double price, std::string msg) : Product(id, price)
+	{
+		
+
+		if (msg[1] == 'P')
+		{
+			m_tax = "PST";
+		}
+
+		else
+		{
+			if (msg[1] == 'H')
+			{
+				m_tax = "HST";
+			}
+
+			else
+			{
+				m_tax = " ";
+			}
+		}
+		
+	}
+
+
+	double TaxableProduct::getCharge() const
+	{
+		
+		if (m_tax == "PST")
+		{
+			return (Product::getCharge()*1.08);
+		}
+		else
+		{
+			if (m_tax == "HST") 
+			{
+				return (Product::getCharge()*1.13);
+			}
+			
+			else
+			{
+				return Product::getCharge();	
+			}
+		} 
+		
+
+	}
+
+	void TaxableProduct::display(std::ostream& out) const
+	{
+		Product::display(out);
+		
+		out.setf(std::ios::left);
+		out << " " << m_tax << std::endl;
+
+	}
+
+}jcoelho-neto@matrix:~/OOP345/w6> cat w6.cpp 
+// Workshop 7 - STL Containers
+// w7.cpp
+
+#include <iostream>
+#include <string>
+#include "Sale.h"
+
+int main(int argc, char** argv) {
+	if (argc != 2) {
+		std::cerr << argv[0] << ": incorrect number of arguments\n";
+		std::cerr << "Usage: " << argv[0] << " file_name\n";
+		return 1;
+	}
+
+	w7::Sale sale(argv[1]);
+	sale.display(std::cout);
+
+	std::cout << "\nPress any key to continue ... ";
+	std::cin.get();
+}jcoelho-neto@matrix:~/OOP345/w6> gcat w6.cpp [12@TaxableProduct[C[C[C[C[C[10PSale[C[C[C[C[C[3@Product[C[C[C[C[C[1PiProduct.h[C[9Pwhoami[2Pexitm3 robust_task.txt robust_cust.txt robust_item.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[3Pclean_task.txt clean_cust.txt clean[C[C[C[C[C[C[C[C[C[C[C[C[C[2P|[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[3@robust_task.txt robust_cust.txt robust[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m3 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp ItemManager.cpp OrderManager.cpp Task.cpp TaskManager.cpp Utilities.cpp[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[Kw[K w6 Product.cpp Sale.cpp TaxableProduct.cpp w6.cpp 
+jcoelho-neto@matrix:~/OOP345/w6> [Kjcoelho-neto@matrix:~/OOP345/w6> w6 products.txt 
+Product No      Cost Taxable
+     10012     34.56  
+     10023     45.67 HST
+     10234     12.32 PST
+     10056     67.54  
+     10029     54.12 HST
+     10034      96.3  
+    Total:    324.47
+
+Press any key to continue ... 
+jcoelho-neto@matrix:~/OOP345/w6> exit
+exit
+
+Script done on Fri 20 Apr 2018 10:42:17 PM EDT
