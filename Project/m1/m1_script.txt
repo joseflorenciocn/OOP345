@@ -1,0 +1,588 @@
+Script started on Mon 19 Mar 2018 10:23:39 PM EDT
+jcoelho-neto@matrix:~/OOP345/Project/m1> exitm1 malformed.txt '|'[1@whitespace[C[C[C[C[C[C[C[C[5Pclean[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m1 main.cpp Utilities.cpp Task.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat Utilities.cpp[K[4PTask.cpp [7Pwhoamim1 clean3.txt "|"g++ -std=c++0x -o m1 main.cpp Utilities.cpp Task.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cm1 clean3.txt "|"[K[11Pwhoami
+jcoelho-neto
+jcoelho-neto@matrix:~/OOP345/Project/m1> whoami[2Pexitm1 malformed.txt '|'[1@whitespace[C[C[C[C[C[C[C[C[5Pclean[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m1 main.cpp Utilities.cpp Task.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat Utilities.cpp[K[4PTask.cpp [7Pwhoamicat Task.cpp 
+
+// Milestone 1 - Task Manager
+// Task.cpp
+// Jose Florencio
+// v1.0 - 19/03/2018
+
+#include <string>
+#include "Task.h"
+#include "Utilities.h"
+
+size_t Task::field_width = 0;
+
+Task::Task(const std::string& record)
+{
+         
+	this->slots="1";        
+	this->pNextTask[0] = nullptr;
+	this->pNextTask[1] = nullptr;
+
+	Utilities util;
+
+	bool more=true;
+	size_t next_pos = 0;
+	std::string token;
+	int token_qty = 0;
+
+	// while more tokens are available for extraction
+	while (more)
+	{
+		try 
+		{
+			token = util.nextToken(record, next_pos, more);
+			
+			if (token_qty == 0)
+			{
+				name = token;
+				token_qty++;
+			}
+
+			else
+			{
+				if (token_qty == 1)
+				{
+					slots = token;
+					token_qty++;
+				}
+
+				else
+				{
+					if (token_qty == 2)
+					{
+						nextTask[passed] = token;
+						token_qty++;
+					}
+
+					else
+					{
+						if (token_qty == 3)
+						{
+							nextTask[redirect] = token;
+							token_qty++;
+						}
+					}
+
+				}
+
+			}
+		}
+
+		catch (const std::string& msg) 
+		{
+			std::cout << msg << "<-- *** no token found before the delimiter ***" << std::endl;
+		}
+
+	}
+
+	if (field_width < util.getFieldWidth()) 
+	{
+		field_width = util.getFieldWidth();
+	}
+
+	
+}
+
+const std::string& Task::getName() const
+{
+	return this->name;
+}
+
+//Product slots in the token (converted from a string to an unsigned integer)
+unsigned int Task::getSlots() const
+{
+	unsigned int val = atoi(slots.c_str()); 
+	return val;
+
+}
+
+bool Task::validate(const Task& task) 
+{
+	bool valid = true;
+	for (int i = 0; i < 2; i++) 
+	{
+		if (!nextTask[i].empty() && nextTask[i] == task.getName()) pNextTask[i] = &task;
+		if (!nextTask[i].empty() && !pNextTask[i]) valid = false;
+	}
+	return valid;
+
+}
+const Task* Task::getNextTask(Quality quantity) const
+{	
+	if (!nextTask[quantity].empty() && !pNextTask[quantity])
+	{
+		throw std::string("*** Validate [" + nextTask[quantity] + "] @ [" + name + "] ***");
+	}
+
+	return pNextTask[quantity];
+}
+
+void Task::display(std::ostream& out) const
+{
+
+	out.setf(std::ios::left);
+	out << "Task Name    : ";
+	out.width(field_width + 2);
+	out << "[" + name + "]" << " [" + slots + "]" << std::endl;
+
+		if (!nextTask[passed].empty()) 
+		{
+			out << " Continue to : ";
+			out.width(field_width + 2);
+			out << "[" + nextTask[passed] + "]";
+
+			if (!pNextTask[passed]) 
+			{
+				out << " *** to be validated ***";
+			}
+			out << std::endl;
+		}
+
+		if (!nextTask[redirect].empty())
+		{
+			out << " Redirect to : ";
+			out.width(field_width + 2);
+			out << "[" + nextTask[redirect] + "]";
+
+			if (!pNextTask[redirect])
+			{
+				out << " *** to be validated ***";
+			}
+			out << std::endl;
+		}
+
+
+
+}
+
+size_t Task::getFieldWidth()
+{
+
+	return field_width;
+
+}
+
+bool operator==(const Task& first, const Task& second) 
+{ 
+	if (first.getName() == second.getName()) return true;
+	else return false;
+}jcoelho-neto@matrix:~/OOP345/Project/m1> cat Task.cpp [7Pwhoami[2Pexitm1 malformed.txt '|'[1@whitespace[C[C[C[C[C[C[C[C[5Pclean[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m1 main.cpp Utilities.cpp Task.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat Utilities.cpp[K[4PTask.cpp Utilities.cpp
+// Milestone 1 - Task Manager
+// Utilities.cpp
+// Jose Florencio
+// v1.0 - 19/03/2018
+
+#include "Utilities.h"
+#include <string>
+#include <iostream>
+#include <fstream>
+
+char Utilities::delimiter = '|';
+std::ofstream Utilities::logFile;
+
+Utilities::Utilities()
+{
+
+	field_width = 1;
+
+}
+
+//Not used in the program
+/*
+void Utilities::setFieldWidth(size_t fw)
+{
+
+
+
+}
+*/
+
+
+size_t Utilities::getFieldWidth() const
+{
+
+	return this->field_width;
+
+}
+
+
+const std::string Utilities::nextToken(const std::string& str, size_t& next_pos, bool& more)
+{
+	int token_qty = 1;
+
+
+	std::string token;
+
+	for (size_t i = next_pos; i < str.length(); i++)
+	{
+		if (str[i] == delimiter)
+		{
+			token_qty++;
+		}
+
+	}
+
+		std::string* word_tmp = new std::string[token_qty];
+		int* position = new int[token_qty];
+		int flag = 0;
+		position[0] = 0;
+
+		for (size_t j = next_pos; j < str.length(); j++)
+		{
+			if (str[j] == delimiter)
+			{
+				position[flag] = j;
+				flag++;			
+			}
+
+			else word_tmp[flag] = word_tmp[flag] + str[j];
+		}
+
+		token = word_tmp[0];
+		if (position[0] != 0)
+		{
+			next_pos = (position[0] + 1);
+			more = true;
+		}
+
+		else
+		{
+			next_pos = str.length();
+			more = false;
+		}
+
+		delete[] word_tmp;
+		delete[] position;
+
+
+	if (field_width < token.length())
+	{
+		field_width = token.length();
+	}
+
+	//Code to trim the whitespaces
+	if (token.length() > 1) 
+	{
+		unsigned fPos = token.find_first_not_of(" \a\b\f\n\r\t\v");
+		unsigned lPos = token.find_last_not_of(" \a\b\f\n\r\t\v");
+		if (fPos != std::string::npos)
+			token = std::string(token, fPos, lPos - fPos + 1);
+	}
+
+	
+	if (token.empty())
+	{
+		more = 0;
+		
+		//Code to save the record from the task and pass as an throw exception
+		//I made this code because i have a lot of problemns 
+		//in the linux compilation that cant concatenate the strings
+		/////////////////////////////////////////////////////////////
+		std::string record;
+		for (size_t i=0; i<(str.length()-1); i++)
+		{
+		record += str[i];
+		}
+		///////////////////////////////////////////////////////////////
+		//If you are using visual studio environment comment this code above
+		// and remove the comment before the throw execution
+		
+		
+		//std::string record = str;
+		throw std::string(record);
+	}
+
+	return token;
+
+}
+
+void Utilities::setDelimiter(const char del)
+{
+	delimiter = del;
+}
+
+void Utilities::setLogFile(const char* logfile)
+{
+	std::ofstream file;
+	file.open(logfile);
+}
+
+std::ofstream& Utilities::getLogFile()
+{
+
+	return logFile;
+
+}
+jcoelho-neto@matrix:~/OOP345/Project/m1> cat Utilities.cpp[4PTask.cpp [7Pwhoami[2Pexitm1 malformed.txt '|'[1@whitespace[C[C[C[C[C[C[C[C[5Pclean[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m1 main.cpp Utilities.cpp Task.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat Utilities.cpp[Kg++ -std=c++0x -o m1 main.cpp Utilities.cpp Task.cpp
+jcoelho-neto@matrix:~/OOP345/Project/m1> g++ -std=c++0x -o m1 main.cpp Utilities.cpp Task.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat Utilities.cpp[K[4PTask.cpp [7Pwhoami[2Pexitm1 malformed.txt '|'[1@whitespace[C[C[C[C[C[C[C[C[5Pclean[C[C[C[C[C[C[C[C
+Command Line Arguments
+----------------------
+Tasks File Specified          = clean.txt
+File Record Field Delimiter   = |
+
+
+*** Load and Accept the Tasks ***
+
+List of Accepted Tasks
+----------------------
+Task Name    : [Power Supply]   [4]
+ Continue to : [Motherboard]    *** to be validated ***
+Task Name    : [Motherboard]    [3]
+ Continue to : [CPU]            *** to be validated ***
+ Redirect to : [Remove CPU]     *** to be validated ***
+Task Name    : [Remove CPU]     [1]
+ Continue to : [CPU]            *** to be validated ***
+Task Name    : [CPU]            [5]
+ Continue to : [Memory]         *** to be validated ***
+ Redirect to : [Remove CPU]     *** to be validated ***
+Task Name    : [Remove CPU]     [1]
+ Continue to : [CPU]            *** to be validated ***
+Task Name    : [Memory]         [4]
+ Continue to : [SSD]            *** to be validated ***
+ Redirect to : [Remove Memory]  *** to be validated ***
+Task Name    : [Remove Memory]  [1]
+ Continue to : [Memory]         *** to be validated ***
+Task Name    : [SSD]            [4]
+ Continue to : [GPU]            *** to be validated ***
+ Redirect to : [Remove SSD]     *** to be validated ***
+Task Name    : [Remove SSD]     [1]
+ Continue to : [SSD]            *** to be validated ***
+Task Name    : [GPU]            [3]
+ Continue to : [Test]           *** to be validated ***
+Task Name    : [Test]           [4]
+ Continue to : [Approve]        *** to be validated ***
+ Redirect to : [Repair]         *** to be validated ***
+Task Name    : [Repair]         [1]
+Task Name    : [Approve]        [1]
+
+Check Follow-On Tasks
+---------------------
+*** Validate [Motherboard] @ [Power Supply] ***
+*** Validate [CPU] @ [Motherboard] ***
+*** Validate [CPU] @ [Remove CPU] ***
+*** Validate [Memory] @ [CPU] ***
+*** Further checks suspended ***
+
+Validating the Accepted Tasks
+-----------------------------
+Task Name    : [Power Supply]   [4]
+ Continue to : [Motherboard]   
+Task Name    : [Motherboard]    [3]
+ Continue to : [CPU]           
+ Redirect to : [Remove CPU]    
+Task Name    : [Remove CPU]     [1]
+ Continue to : [CPU]           
+Task Name    : [CPU]            [5]
+ Continue to : [Memory]        
+ Redirect to : [Remove CPU]    
+Task Name    : [Remove CPU]     [1]
+ Continue to : [CPU]           
+Task Name    : [Memory]         [4]
+ Continue to : [SSD]           
+ Redirect to : [Remove Memory] 
+Task Name    : [Remove Memory]  [1]
+ Continue to : [Memory]        
+Task Name    : [SSD]            [4]
+ Continue to : [GPU]           
+ Redirect to : [Remove SSD]    
+Task Name    : [Remove SSD]     [1]
+ Continue to : [SSD]           
+Task Name    : [GPU]            [3]
+ Continue to : [Test]          
+Task Name    : [Test]           [4]
+ Continue to : [Approve]       
+ Redirect to : [Repair]        
+Task Name    : [Repair]         [1]
+Task Name    : [Approve]        [1]
+
+Done!
+Press Enter Key to Exit ... 
+jcoelho-neto@matrix:~/OOP345/Project/m1> m1 clean.txt '|'g++ -std=c++0x -o m1 main.cpp Utilities.cpp Task.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat Utilities.cpp[K[4PTask.cpp [7Pwhoami[2Pexitm1 malformed.txt '|'[1@whitespace[C[C[C[C[C[C[C[C
+Command Line Arguments
+----------------------
+Tasks File Specified          = whitespace.txt
+File Record Field Delimiter   = |
+
+
+*** Load and Accept the Tasks ***
+
+List of Accepted Tasks
+----------------------
+Task Name    : [Power Supply]               [4]
+ Continue to : [Motherboard]                *** to be validated ***
+Task Name    : [Motherboard]                [3]
+ Continue to : [CPU]                        *** to be validated ***
+ Redirect to : [Remove CPU]                 *** to be validated ***
+Task Name    : [Remove CPU]                 [1]
+ Continue to : [CPU]                        *** to be validated ***
+Task Name    : [CPU]                        [5]
+ Continue to : [Memory]                     *** to be validated ***
+ Redirect to : [Remove CPU]                 *** to be validated ***
+Task Name    : [Remove CPU]                 [1]
+ Continue to : [CPU]                        *** to be validated ***
+Task Name    : [Memory]                     [4]
+ Continue to : [SSD]                        *** to be validated ***
+ Redirect to : [Remove Memory]              *** to be validated ***
+Task Name    : [Remove Memory]              [1]
+ Continue to : [Memory]                     *** to be validated ***
+Task Name    : [SSD]                        [4]
+ Continue to : [GPU]                        *** to be validated ***
+ Redirect to : [Remove SSD]                 *** to be validated ***
+Task Name    : [Remove SSD]                 [1]
+ Continue to : [SSD]                        *** to be validated ***
+Task Name    : [GPU]                        [3]
+ Continue to : [Test]                       *** to be validated ***
+Task Name    : [Test]                       [4]
+ Continue to : [Approve]                    *** to be validated ***
+ Redirect to : [Repair]                     *** to be validated ***
+Task Name    : [Repair]                     [1]
+Task Name    : [Approve]                    [1]
+
+Check Follow-On Tasks
+---------------------
+*** Validate [Motherboard] @ [Power Supply] ***
+*** Validate [CPU] @ [Motherboard] ***
+*** Validate [CPU] @ [Remove CPU] ***
+*** Validate [Memory] @ [CPU] ***
+*** Further checks suspended ***
+
+Validating the Accepted Tasks
+-----------------------------
+Task Name    : [Power Supply]               [4]
+ Continue to : [Motherboard]               
+Task Name    : [Motherboard]                [3]
+ Continue to : [CPU]                       
+ Redirect to : [Remove CPU]                
+Task Name    : [Remove CPU]                 [1]
+ Continue to : [CPU]                       
+Task Name    : [CPU]                        [5]
+ Continue to : [Memory]                    
+ Redirect to : [Remove CPU]                
+Task Name    : [Remove CPU]                 [1]
+ Continue to : [CPU]                       
+Task Name    : [Memory]                     [4]
+ Continue to : [SSD]                       
+ Redirect to : [Remove Memory]             
+Task Name    : [Remove Memory]              [1]
+ Continue to : [Memory]                    
+Task Name    : [SSD]                        [4]
+ Continue to : [GPU]                       
+ Redirect to : [Remove SSD]                
+Task Name    : [Remove SSD]                 [1]
+ Continue to : [SSD]                       
+Task Name    : [GPU]                        [3]
+ Continue to : [Test]                      
+Task Name    : [Test]                       [4]
+ Continue to : [Approve]                   
+ Redirect to : [Repair]                    
+Task Name    : [Repair]                     [1]
+Task Name    : [Approve]                    [1]
+
+Done!
+Press Enter Key to Exit ... 
+jcoelho-neto@matrix:~/OOP345/Project/m1> m1 whitespace.txt '|'[5Pclean[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m1 main.cpp Utilities.cpp Task.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat Utilities.cpp[K[4PTask.cpp [7Pwhoami[2Pexitm1 malformed.txt '|'
+Command Line Arguments
+----------------------
+Tasks File Specified          = malformed.txt
+File Record Field Delimiter   = |
+
+
+*** Load and Accept the Tasks ***
+||<-- *** no token found before the delimiter ***
+|Remove SSD|1|SSD|<-- *** no token found before the delimiter ***
+
+List of Accepted Tasks
+----------------------
+Task Name    : [Power Supply]                 [4]
+ Continue to : [Motherboard]                  *** to be validated ***
+Task Name    : [Motherboard]                  [3]
+ Continue to : [CPU]                          *** to be validated ***
+ Redirect to : [Remove CPU]                   *** to be validated ***
+Task Name    : [Remove CPU]                   [1]
+ Continue to : [CPU]                          *** to be validated ***
+Task Name    : [CPU]                          [5]
+ Continue to : [Memory]                       *** to be validated ***
+ Redirect to : [Remove CPU]                   *** to be validated ***
+Task Name    : [Remove CPU]                   [1]
+ Continue to : [CPU]                          *** to be validated ***
+Task Name    : [Memory]                       [4]
+ Continue to : [SSD]                          *** to be validated ***
+ Redirect to : [Remove Memory]                *** to be validated ***
+Task Name    : [Remove Memory]                [1]
+ Continue to : [Memory]                       *** to be validated ***
+Task Name    : [SSD]                          [4]
+ Continue to : [GPU]                          *** to be validated ***
+ Redirect to : [Remove SSD]                   *** to be validated ***
+Task Name    : [Remove SSD]                   [1]
+ Continue to : [SSD]                          *** to be validated ***
+Task Name    : [GPU]                          [3]
+ Continue to : [Test]                         *** to be validated ***
+Task Name    : [Test]                         [4]
+ Continue to : [Approve]                      *** to be validated ***
+ Redirect to : [Repair]                       *** to be validated ***
+Task Name    : [Test / 4 / Approve / Repair]  [1]
+Task Name    : [CPU]                          [5]
+ Continue to : [Memory]                       *** to be validated ***
+ Redirect to : [Remove CPU]                   *** to be validated ***
+Task Name    : [4]                            [SSD]
+ Continue to : [GPU]                          *** to be validated ***
+ Redirect to : [Remove SSD]                   *** to be validated ***
+Task Name    : [Repair]                       [1]
+Task Name    : [Approve]                      [1]
+
+Check Follow-On Tasks
+---------------------
+*** Validate [Motherboard] @ [Power Supply] ***
+*** Validate [CPU] @ [Motherboard] ***
+*** Validate [CPU] @ [Remove CPU] ***
+*** Validate [Memory] @ [CPU] ***
+*** Further checks suspended ***
+
+Validating the Accepted Tasks
+-----------------------------
+Task Name    : [Power Supply]                 [4]
+ Continue to : [Motherboard]                 
+Task Name    : [Motherboard]                  [3]
+ Continue to : [CPU]                         
+ Redirect to : [Remove CPU]                  
+Task Name    : [Remove CPU]                   [1]
+ Continue to : [CPU]                         
+Task Name    : [CPU]                          [5]
+ Continue to : [Memory]                      
+ Redirect to : [Remove CPU]                  
+Task Name    : [Remove CPU]                   [1]
+ Continue to : [CPU]                         
+Task Name    : [Memory]                       [4]
+ Continue to : [SSD]                         
+ Redirect to : [Remove Memory]               
+Task Name    : [Remove Memory]                [1]
+ Continue to : [Memory]                      
+Task Name    : [SSD]                          [4]
+ Continue to : [GPU]                         
+ Redirect to : [Remove SSD]                  
+Task Name    : [Remove SSD]                   [1]
+ Continue to : [SSD]                         
+Task Name    : [GPU]                          [3]
+ Continue to : [Test]                        
+Task Name    : [Test]                         [4]
+ Continue to : [Approve]                     
+ Redirect to : [Repair]                      
+Task Name    : [Test / 4 / Approve / Repair]  [1]
+Task Name    : [CPU]                          [5]
+ Continue to : [Memory]                      
+ Redirect to : [Remove CPU]                  
+Task Name    : [4]                            [SSD]
+ Continue to : [GPU]                         
+ Redirect to : [Remove SSD]                  
+Task Name    : [Repair]                       [1]
+Task Name    : [Approve]                      [1]
+
+Done!
+Press Enter Key to Exit ... 
+jcoelho-neto@matrix:~/OOP345/Project/m1> m1 malformed.txt '|'[1@whitespace[C[C[C[C[C[C[C[C[5Pclean[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m1 main.cpp Utilities.cpp Task.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat Utilities.cpp[K[4PTask.cpp [7Pwhoami[2Pexitm1 malformed.txt '|'exit[K
+exit
+
+Script done on Mon 19 Mar 2018 10:24:38 PM EDT
