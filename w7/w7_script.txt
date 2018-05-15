@@ -1,0 +1,331 @@
+Script started on Fri 20 Apr 2018 10:43:26 PM EDT
+jcoelho-neto@matrix:~/OOP345/w7> whi[Koami
+jcoelho-neto
+jcoelho-neto@matrix:~/OOP345/w7> cat DataTable.h 
+#ifndef DATATABLE_H
+#define DATATABLE_H
+
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <cstring>
+#include <vector>
+#include <numeric>
+
+namespace w8
+{
+
+	template <typename T>
+	class DataTable
+	{
+	public:
+		DataTable(std::ifstream& in, int FW, int ND) //Constructor
+		{
+		
+				T x_tmp, y_tmp;
+
+				if (in.is_open())
+				{
+					while (!in.eof())
+					{
+					in >> x_tmp >> y_tmp;
+					x.push_back(x_tmp);
+					y.push_back(y_tmp);
+				}
+		}
+
+		fw = FW;
+		nd = ND;
+		
+		}
+		
+		T mean() const // returns the mean value of the dependent coordinate
+		{
+		
+		T num = y.size();
+
+		std::vector<T> elem(y.size());
+		std::transform(y.begin(), y.end(), elem.begin(), [num](T a) {
+			return a / num;
+		});
+
+		T sum = std::accumulate(elem.begin(), elem.end(), (T)0);
+
+		return (T)sum;
+		
+		}
+		
+		T sigma() const //returns the standard deviation of the dependent coordinates
+		{
+		
+		T mn = mean();
+
+		std::vector<T> elem(y.size());
+		std::transform(y.begin(), y.end(), elem.begin(), [mn](T a) {
+			return  a - mn;
+		});
+
+		T total = std::inner_product(elem.begin(), elem.end(), elem.begin(), (T)0);
+
+		return (T)sqrt(total / (y.size() - 1));
+			
+		}
+		
+		T median() const //returns the median value of the dependent coordinate
+		{
+		
+		std::vector<T> elem = this->y;
+		std::nth_element(elem.begin(), elem.begin() + elem.size() / 2, elem.end());
+
+		return elem[elem.size() / 2];
+		
+		}
+		
+		void regression(T& slope, T& y_intercept) const //returns the slope and intercept for the data set
+		{
+		
+		T n = (T)y.size();
+
+		T Exy = std::inner_product(x.begin(), x.end(), y.begin(), (T)0);
+		T Ex2 = std::inner_product(x.begin(), x.end(), x.begin(), (T)0);
+
+		T Ex = std::accumulate(x.begin(), x.end(), (T)0);
+		T Ey = std::accumulate(y.begin(), y.end(), (T)0);
+
+		slope = (n*Exy - Ex * Ey) / (n*Ex2 - Ex * Ex);
+		y_intercept = (Ey - slope * Ex) / n;
+
+		
+		}
+		
+		void display(std::ostream& out) const //displays the data pairs as shown below
+		{
+		
+		for (int i = 0; i < x.size(); i++)
+		{
+			
+			out << std::fixed << std::setprecision(2) << x[i] << "   " << y[i] << std::endl;
+		}
+		
+		}
+
+	private:
+		std::vector<T> x;
+		std::vector<T> y;
+		int fw;
+		int nd;
+
+	};
+
+}
+
+template <typename T> std::ostream& operator<<(std::ostream& out, const w8::DataTable<T>& dat)
+{
+	
+		dat.display(out);
+
+		return out;
+	
+	
+}
+
+
+#endif
+
+
+
+jcoelho-neto@matrix:~/OOP345/w7> cat main.cpp 
+// Workshop 8 - STL Algorithms
+// w8.cpp
+
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <string>
+#include "DataTable.h"
+
+const int FW = 7;
+const int ND = 2;
+
+int main(int argc, char** argv) {
+	std::cout << "\nCommand Line : ";
+	for (int i = 0; i < argc; i++) {
+		std::cout << argv[i] << ' ';
+	}
+	std::cout << std::endl;
+	if (argc != 2 && argc != 3) {
+		std::cerr << argv[0] << ": incorrect number of arguments\n";
+		std::cerr << "Usage: " << argv[0] << " file_name [p]\n";
+		return 1;
+	}
+	std::ifstream dataFile(argv[1]);
+	if (!dataFile) {
+		std::cerr << "\n***Failed to open file " << argv[1] << "***\n";
+		return 2;
+	}
+
+	try {
+		w8::DataTable<float> data(dataFile, FW, ND);
+		if (argc == 3) {
+			std::cout << "\nData Values\n===========\n";
+			std::cout << data << std::endl;
+		}
+		float m, c;
+		data.regression(m, c);
+		std::cout << "\nStatistics\n==========\n";
+		std::cout << std::fixed << std::setprecision(ND);
+		std::cout << "y mean    = " << std::setw(FW) << data.mean() <<
+			"\ny sigma   = " << std::setw(FW) << data.sigma() <<
+			"\ny median  = " << std::setw(FW) << data.median() << std::endl;
+		std::cout << "slope     = " << std::setw(FW) << m <<
+			"\nintercept = " << std::setw(FW) << c << std::endl;
+	}
+	catch (std::string& msg) {
+		std::cout << msg << std::endl;
+		return 3;
+	}
+
+	std::cout << "\nPress any key to continue ... ";
+	std::cin.get();
+}jcoelho-neto@matrix:~/OOP345/w7> cat main.cpp [3@DataTable.h[C[10Pwhoami[2Pexitw6 products.txt [52@g++ -std=c++0x -o w6 Product.cpp Sale.cpp TaxableProduct.cpp w6.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat w6.cpp [K[12@TaxableProduct[C[C[C[C[C[10PSale[C[C[C[C[C[3@Product[C[C[C[C[C[1PiProduct.h[C[9Pwhoami[2Pexitm3 robust_task.txt robust_cust.txt robust_item.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[3Pclean_task.txt clean_cust.txt clean[C[C[C[C[C[C[C[C[C[C[C[C[C[2P|[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[3@robust_task.txt robust_cust.txt robust[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m3 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp ItemManager.cpp OrderManager.cpp Task.cpp TaskManager.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat Utilities.cpp[KTaskManager.cpp[6P.cpp OrderManager.cpp[7Pmain.cpp [7@ItemManager[C[C[C[C[C[7P[C[C[C[C[C[9@CustomerOrder[C[C[C[C[C[1PItem[C[C[C[C[Cwhoami[K7 grade.txt p[1@n[C[C[C[C[C[C[C[Csimpl[C[C[C[C[C[C[C[10Pcd w7..w8 Description.txt Prices.txtcd ..[Kw7w7 simple.txt pgrand[C[C[C[C[C[C[C[1P[C[C[C[C[C[C[C[C[K[7Phoami7 grade.txt p[1@n[C[C[C[C[C[C[C[Csimpl[C[C[C[C[C[C[C[10Pcd w7..w8 Description.txt Prices.txtcd w8[K..w9 w10_text.dat encoded.dat %cd w9[K..w8 Description.txt Badprices.txt[3PPrices.txtBadprices.txtPrices.txt[3PPrices.txtcd w8[K..w8 Description.txt Prices.txt[16P7 grade.txt p[1@simpl[C[C[C[C[C[C[C[10Pcd w7..w6 products.txt cd w6[K[1P..w9 w10_text.dat encoded.dat %g++ -std=c++0x -o w9 w9.cpp SecureData.cpp [C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[14Pw9 w10_text.dat encoded.dat %g++ -std=c++0x -o m3 w9.cpp SecureData.cpp [C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[14Pw9 w10_text.dat encoded.dat %g++ -std=c++0x -o m3 w9.cpp SecureData.cpp \\\\\\\\\\\\\\\\\[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K0 w7 main.cpp 
+g++: error: unrecognized option ‘-0’
+jcoelho-neto@matrix:~/OOP345/w7> g++ -std=c++0x -0 w7 main.cpp [C[1P[1@0[1P[1@o
+jcoelho-neto@matrix:~/OOP345/w7> g++ -std=c++0x -o w7 main.cpp 0[C[C[C[C[C[C[C[C[C[C[C[C[C[17Pcat[C[C[C[C[C[C[C[C[C[C[3@DataTable.h[C[10Pwhoami[2Pexitw6 products.txt [52@g++ -std=c++0x -o w6 Product.cpp Sale.cpp TaxableProduct.cpp w6.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat w6.cpp [K[12@TaxableProduct[C[C[C[C[C[10PSale[C[C[C[C[C[3@Product[C[C[C[C[C[1PiProduct.h[C[9Pwhoami[2Pexitm3 robust_task.txt robust_cust.txt robust_item.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[3Pclean_task.txt clean_cust.txt clean[C[C[C[C[C[C[C[C[C[C[C[C[C[2P|[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[3@robust_task.txt robust_cust.txt robust[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m3 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp ItemManager.cpp OrderManager.cpp Task.cpp TaskManager.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat Utilities.cpp[KTaskManager.cpp[6P.cpp OrderManager.cpp[7Pmain.cpp [7@ItemManager[C[C[C[C[C[7P[C[C[C[C[C[9@CustomerOrder[C[C[C[C[C[1PItem[C[C[C[C[Cwhoami[K7 grade.txt p[1@n[C[C[C[C[C[C[C[Csimpl[C[C[C[C[C[C[C[10Pcd w7w7 simple.txt pgrand[C[C[C[C[C[C[C[1P[C[C[C[C[C[C[C[C[1@n[C[C[C[C[C[C[C[C[1P[C[C[C[C[C[C[C[C
+
+Command Line : w7 grade.txt p 
+
+Data Values
+===========
+3.45   3.76
+2.78   2.87
+2.52   2.54
+3.67   3.83
+3.24   3.29
+2.10   2.64
+2.82   2.86
+2.36   2.03
+2.42   2.81
+3.51   3.41
+3.48   3.61
+2.14   2.48
+2.59   3.21
+3.46   3.52
+3.51   3.41
+3.68   3.52
+3.91   3.84
+3.72   3.64
+2.15   2.14
+2.48   2.21
+3.09   3.17
+2.71   3.01
+2.46   3.17
+3.32   3.01
+3.61   3.72
+3.82   3.78
+2.64   2.51
+2.19   2.10
+3.34   3.21
+3.48   3.68
+3.56   3.48
+3.81   3.71
+3.92   3.81
+2.52   2.09
+2.71   2.17
+3.15   2.98
+3.22   3.28
+2.29   2.74
+2.03   2.19
+3.14   3.28
+3.52   3.68
+2.91   3.17
+2.83   3.17
+2.65   3.31
+2.41   3.07
+2.54   2.38
+2.66   2.94
+3.21   2.84
+3.34   3.17
+3.68   3.72
+2.84   2.17
+2.74   2.42
+2.71   2.49
+2.24   3.38
+2.48   2.07
+3.14   3.22
+2.83   2.71
+3.44   3.31
+2.89   3.28
+2.67   3.19
+3.24   3.24
+3.29   3.53
+3.87   3.72
+3.94   3.98
+3.42   3.09
+3.52   3.42
+2.24   2.07
+3.29   3.17
+3.41   3.51
+3.56   3.49
+3.61   3.51
+3.28   3.40
+3.21   3.38
+3.48   3.54
+3.62   3.48
+2.92   3.09
+2.81   3.14
+3.11   3.28
+3.28   3.41
+2.70   3.02
+2.62   2.97
+3.72   4.00
+3.42   3.34
+3.51   3.28
+3.28   3.32
+3.42   3.51
+3.90   3.68
+3.12   3.07
+2.83   2.78
+2.09   3.68
+3.17   3.30
+3.28   3.34
+3.02   3.17
+3.42   3.07
+3.06   3.19
+2.76   2.15
+3.19   3.11
+2.23   2.17
+2.48   2.14
+3.76   3.74
+3.49   3.27
+3.07   3.19
+2.19   2.98
+3.46   3.28
+3.46   3.28
+
+
+Statistics
+==========
+y mean    =    3.12
+y sigma   =    0.50
+y median  =    3.21
+slope     =    0.78
+intercept =    0.73
+
+Press any key to continue ... 
+jcoelho-neto@matrix:~/OOP345/w7> w7 grade.txt p[K[K
+
+Command Line : w7 grade.txt 
+
+Statistics
+==========
+y mean    =    3.12
+y sigma   =    0.50
+y median  =    3.21
+slope     =    0.78
+intercept =    0.73
+
+Press any key to continue ... 
+jcoelho-neto@matrix:~/OOP345/w7> exit
+exit
+
+Script done on Fri 20 Apr 2018 10:44:49 PM EDT
