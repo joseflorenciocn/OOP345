@@ -1,0 +1,168 @@
+Script started on Fri 09 Feb 2018 06:39:56 PM EST
+jcoelho-neto@matrix:~/OOP345/w2> whoami
+jcoelho-neto
+jcoelho-neto@matrix:~/OOP345/w2> catw1[K[K w2[K3.cpp[K[K[K[K[K[KText.cpp
+#include <iostream>
+#include <cstring>
+#include <fstream>
+#include "Text.h"
+
+namespace w3
+{
+/*!Default Constructor */
+	Text::Text(const char* str)
+	{
+		if (!strcmp(str, "empty"))
+		{
+			m_ptext = nullptr;
+			m_size = 0;
+	
+		}
+		else
+		{
+			int size_file;
+			char* textfile;
+			std:: string num_lines;
+			m_size = 0;
+			
+			//Simple code to add .txt at the end of file
+			size_file = strlen(str);
+
+			textfile = new char[size_file+5];
+			strcpy(textfile, str);
+			strcat(textfile, ".txt");
+			
+			//Open the file
+			std::ifstream is;
+			is.open(textfile);
+
+			if (is.is_open())
+			{
+				
+				//count the number of lines
+				while (getline(is, num_lines, '\n')) 
+							 {++m_size;} 
+				
+				//create a string with the file's number of lines
+				m_ptext = new std::string[m_size +1];
+				
+				//Rewind the file
+				is.clear();
+				is.seekg(0);
+				
+				//insert the data inside the object
+				for (int t = 0; t < m_size; t++)
+				{
+					getline(is,m_ptext[t],'\n');
+				}
+
+				m_ptext[m_size] = '\0';
+
+				is.close();
+			}
+
+			else m_ptext = nullptr;			
+	
+			delete[] textfile;
+
+		}
+	}
+
+	/*!Default Destructor */
+	Text::~Text()
+	{
+
+		delete[] m_ptext;
+
+	}
+	
+	/*!Display function to show whats is inside the member */
+	void Text::display() const
+	{
+		for (int i=0; i<m_size; i++)
+		{
+			std::cout << m_ptext[i] << std::endl;
+		}
+	}
+
+	/*!Copy constructor */
+	Text::Text(const Text& other)
+	{
+		this->m_ptext = nullptr;
+		this->m_size = 0;
+		*this = other;
+	}
+
+	/*!Copy assignment */
+	Text& Text::operator=(const Text& other)
+	{
+
+		if (this != &other)
+		{
+			delete[] this->m_ptext;
+
+
+				this->m_ptext = new std::string[other.m_size +1];
+				for (int i = 0; i <= other.m_size; ++i)
+				{
+					this->m_ptext[i] = other.m_ptext[i];
+				}
+				this->m_size = other.m_size;
+			
+		}
+		return *this;
+
+	}
+
+	/*!Move constructor */
+	Text::Text (Text&& other)
+	{
+	
+		this->m_ptext = other.m_ptext;
+		this->m_size = other.m_size;
+
+		other.m_ptext = nullptr;
+		other.m_size = 0;
+	
+	}
+
+	/*!Move assignment */
+	Text& Text::operator=(Text&& other)
+	{
+		if (this != &other)
+		{
+
+			delete[] this->m_ptext;
+
+			this->m_ptext = other.m_ptext;
+			this->m_size = other.m_size;
+
+			other.m_ptext = nullptr;
+			other.m_size = 0;
+		}
+
+		return *this;
+	}
+
+	/*!Display Size of member */
+	size_t Text::size() const
+	{
+		return m_size;
+	}
+
+}
+	
+
+jcoelho-neto@matrix:~/OOP345/w2> cat Text.cpp[6Pwhoamidoxygen Doxyfile-g[Kscript w2.txtls[Kcd OOP345/w2/exit[Kw3 gutenberg_shakespeareg++ -std=c++0x -o w3 w3.cpp Text.cpp
+jcoelho-neto@matrix:~/OOP345/w2> g++ -std=c++0x -o w3 w3.cpp Text.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[24Pcat[C[C[C[C[C[C[C[C[C[6Pwhoamidoxygen Doxyfile-g[Kscript w2.txtls[Kcd OOP345/w2/exit[Kw3 gutenberg_shakespeareg++ -std=c++0x -o w3 w3.cpp Text.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[12Pw3 gutenberg_shakespeare
+Constructor      0.000 seconds - a.size = 0
+Constructor      0.120 seconds - b.size = 124453
+Copy Assignment  0.020 seconds - a.size = 124453
+Move Assignment  0.000 seconds - a.size = 124453
+Copy Constructor 0.010 seconds - c.size = 124453
+Move Constructor 0.000 seconds - d.size = 124453
+Destructor       0.030 seconds
+jcoelho-neto@matrix:~/OOP345/w2> exit
+exit
+
+Script done on Fri 09 Feb 2018 06:41:02 PM EST
