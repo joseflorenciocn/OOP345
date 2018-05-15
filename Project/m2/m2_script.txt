@@ -1,0 +1,858 @@
+Script started on Tue 27 Mar 2018 06:37:08 PM EDT
+jcoelho-neto@matrix:~/OOP345/Project/m2> whoami
+jcoelho-neto
+jcoelho-neto@matrix:~/OOP345/Project/m2> cat CustomerOrder.cpp 
+#include <iomanip> 
+#include <vector> 
+#include "CustomerOrder.h"
+#include "CustomerItem.h"
+#include "Item.h"
+#include "Utilities.h"
+
+size_t CustomerOrder::field_width;
+
+CustomerOrder::CustomerOrder(const std::string& record)
+{
+	nOrders = 0;
+	order = nullptr;
+
+	Utilities util;
+
+	bool more = true;
+	size_t next_pos = 0;
+	std::string token;
+	int token_qty = 0;
+
+	std::vector<std::string> items;
+
+	// while more tokens are available for extraction
+	while (more)
+	{
+		try
+		{
+			token = util.nextToken(record, next_pos, more);
+
+			if (token_qty == 0 && token !="Empty")
+			{
+				name = token;
+				token_qty++;
+			}
+
+			else
+			{
+				if (token_qty == 1)
+				{
+					product = token;
+					token_qty++;
+				}
+
+				else
+				{
+					if (more)
+					{
+						items.push_back(token);
+						nOrders++;
+						token_qty++;
+					}
+				}
+
+			}
+		}
+
+		catch (const std::string& msg)
+		{
+			std::cout << msg << "<-- *** no token found before the delimiter ***" << std::endl;
+		}
+
+	}
+	
+	
+	order = new CustomerItem[nOrders];
+
+	for (size_t i=0; i<items.size(); i++) 
+	{
+		
+		order[i] = items[i];
+	}
+
+	if (field_width < util.getFieldWidth()) field_width = util.getFieldWidth();
+
+}
+
+CustomerOrder::CustomerOrder(const CustomerOrder& other) 
+{ 
+
+	throw "*** Error: copy constructor not available ***"; 
+}
+
+CustomerOrder::CustomerOrder(CustomerOrder&& other) NOEXCEPT 
+{
+	order = nullptr;
+	*this = std::move(other);
+	
+}
+
+CustomerOrder&& CustomerOrder::operator=(CustomerOrder&& other) NOEXCEPT 
+{
+	if (this != &other) 
+	{
+		// deallocate memory
+		delete[] order;
+
+		// assign the values
+		name = other.name;
+		product = other.product;
+		order = other.order;
+		nOrders = other.nOrders;
+
+		// reset the values
+		other.name = char(0);
+		other.product = char(0);
+		other.order = nullptr;
+		other.nOrders = 0;
+	}
+	return std::move(*this);
+}
+
+CustomerOrder::~CustomerOrder() 
+{
+	delete[] order;
+	order = nullptr;
+}
+
+bool CustomerOrder::empty() const 
+{	
+	if (name.empty() && product.empty() && nOrders == 0) return true;
+	else return false;
+}
+
+size_t CustomerOrder::noOrders() const 
+{ 
+	return nOrders; 
+}
+
+const std::string& CustomerOrder::operator[](unsigned int i) const 
+{
+	if (i >= nOrders) throw "index out of bounds";
+
+	return order[i].getName();
+}
+
+void CustomerOrder::fill(Item& item) 
+{
+	for (size_t i = 0; i < nOrders; i++) {
+		if (order[i].asksFor(item) && order[i].isFilled() == false) 
+		{
+			order[i].fill(item.getCode());
+			item++;
+		}
+	}
+}
+
+void CustomerOrder::remove(Item& item) 
+{
+	for (size_t i = 0; i < nOrders; i++) 
+	{
+		if (order[i].asksFor(item) && order[i].isFilled()) 
+		{
+			order[i].clear();
+		}
+	}
+}
+
+void CustomerOrder::display(std::ostream& os) const 
+{
+	os << std::left << std::setw(field_width);
+	os << name;
+	os << std::right << std::setw(0);
+	os << " : " << product << std::endl;
+
+	// loop thourgh the CustomerItems object, fillind the ostream object
+	for (size_t i = 0; i < nOrders; i++) 
+	{
+		order[i].display(os);
+	}
+}jcoelho-neto@matrix:~/OOP345/Project/m2> cat CustomerItem.cpp 
+#include <iomanip> 
+#include "CustomerItem.h"
+#include "Item.h"
+
+
+CustomerItem::CustomerItem(const std::string& customerItem)
+{	
+	if (!customerItem.empty()) 
+	{
+		name = customerItem;
+		filled = false;
+		code = 0;
+	}
+
+	else
+	{
+		name = char(0);
+		filled = false;
+		code = 0;
+	}
+
+}
+
+bool CustomerItem::asksFor(const Item& item) const 
+{ 
+	if (name == item.getName())	return true;
+	else return false;
+}
+
+bool CustomerItem::isFilled() const 
+{ 
+	return filled; 
+}
+
+void CustomerItem::fill(const unsigned int c) 
+{
+	code = c;
+	filled = true;
+}
+
+void CustomerItem::clear() 
+{
+	code = 0;
+	filled = false;
+}
+
+const std::string& CustomerItem::getName() const 
+{ 
+	return name; 
+}
+
+void CustomerItem::display(std::ostream& os) const 
+{
+
+	std::string init;
+
+	if (filled)	init = " + [";
+	else init = " - [";
+
+	os << init;
+	os << std::setw(CODE_WIDTH) << std::setfill('0');
+	os << code << "] ";
+	os << std::setfill(' ');
+	os << name << std::endl;
+	
+}jcoelho-neto@matrix:~/OOP345/Project/m2> cat Item.cpp 
+#include <iomanip> 
+#include "Item.h"
+#include "Utilities.h" 
+
+size_t Item::field_width;
+
+
+Item::Item(const std::string& record)
+{	
+	
+	//description = "no detailed description";
+	Utilities util;
+
+	bool more = true;
+	size_t next_pos = 0;
+	std::string token;
+	int token_qty = 0;
+
+	// while more tokens are available for extraction
+	while (more)
+	{
+		try
+		{
+			token = util.nextToken(record, next_pos, more);
+
+			if (token_qty == 0 && token !="Empty")
+			{
+				name = token;
+				token_qty++;
+			}
+
+			else
+			{
+				if (token_qty == 1)
+				{
+					filler = token;
+					token_qty++;
+				}
+
+				else
+				{
+					if (token_qty == 2)
+					{
+						remover = token;
+						token_qty++;
+					}
+
+					else
+					{
+						if (token_qty == 3)
+						{
+							//declare a placeholder to convert
+							std::string::size_type size;
+							// convert it to integer
+							code = std::stoi(token, &size);
+							token_qty++;
+						}
+
+						else
+						{
+							if (token_qty == 4)
+							{
+								if (!(token[0] == ' ') && !token.empty())
+								{
+								description = token;
+								token_qty++;
+								}
+								
+								else
+								{
+								description = "no detailed description";
+								token_qty++;
+								}
+								
+							}
+						}
+					}
+
+				}
+
+			}
+		}
+
+		catch (const std::string& msg)
+		{
+			std::cout << msg << "<-- *** no token found before the delimiter ***" << std::endl;
+		}
+
+	}
+
+	if (field_width < util.getFieldWidth()) field_width = util.getFieldWidth();
+
+}
+
+bool Item::empty() const 
+{ 
+	return name.empty(); 
+}
+
+Item& Item::operator++(int c) 
+{
+  code++;
+	return *this;
+}
+
+const std::string& Item::getName() const 
+{ 
+	return name; 
+}
+
+const std::string& Item::getFiller() const 
+{ 
+	return filler; 
+}
+
+const std::string& Item::getRemover() const 
+{ 
+	return remover; 
+}
+
+size_t Item::getCode() const 
+{ 
+	return code; 
+}
+
+void Item::display(std::ostream& os, bool full) const {
+	os << std::left << std::setw(field_width) << std::setfill(' ');
+	os << name << " [";
+	os << std::right << std::setw(CODE_WIDTH) << std::setfill('0');
+	os << code;
+	os << std::setfill(' ') << "] ";
+
+	// if the full flag is true, this function includes a complete description of the item
+	if (full) 
+	{
+		os << "From ";
+		os << std::left << std::setw(field_width);
+		os << name << " To " << remover << std::endl;
+		os << std::right << std::setw(field_width + CODE_WIDTH + 4);
+		os << "  : " << description;
+	}
+	os << std::endl;
+}jcoelho-neto@matrix:~/OOP345/Project/m2> cat Utilities.cpp 
+// Milestone 1 - Task Manager
+// Utilities.cpp
+// Jose Florencio
+// v1.0 - 19/03/2018
+
+#include "Utilities.h"
+#include <string>
+#include <iostream>
+#include <fstream>
+
+char Utilities::delimiter = '|';
+std::ofstream Utilities::logFile;
+
+Utilities::Utilities()
+{
+
+	field_width = 1;
+
+}
+
+//Not used in the program
+/*
+void Utilities::setFieldWidth(size_t fw)
+{
+
+
+
+}
+*/
+
+
+size_t Utilities::getFieldWidth() const
+{
+
+	return this->field_width;
+
+}
+
+
+const std::string Utilities::nextToken(const std::string& str, size_t& next_pos, bool& more)
+{
+	
+	int del_qty = 0;
+	int token_qty;
+
+
+	std::string token;
+
+	for (size_t i = next_pos; i < str.length(); i++)
+	{
+		if (str[i] == delimiter)
+		{
+			del_qty++;
+		}
+
+	}
+		
+	
+	if (del_qty == 0 && next_pos == 0)
+	{
+		
+		more = 0;
+		token = "Empty";
+		
+	}
+	
+	else 
+	{
+		token_qty = (del_qty + 1);
+	
+		std::string* word_tmp = new std::string[token_qty];
+		int* position = new int[token_qty];
+		int flag = 0;
+		position[0] = 0;
+
+		for (size_t j = next_pos; j < str.length(); j++)
+		{
+			if (str[j] == delimiter || j==(str.length()-1))
+			{
+				position[flag] = j;		
+			}
+
+			if (str[j] == delimiter) flag++;
+
+			else word_tmp[flag] = word_tmp[flag] + str[j];
+		}
+		
+		token = word_tmp[0];
+
+		//Code to trim the whitespaces
+		if (token.length() > 1) 
+		{
+			unsigned fPos = token.find_first_not_of(" \a\b\f\n\r\t\v");
+			unsigned lPos = token.find_last_not_of(" \a\b\f\n\r\t\v");
+			if (fPos != std::string::npos)
+				token = std::string(token, fPos, lPos - fPos + 1);
+		}
+		
+	
+		if (position[0] == 0 || (token_qty == 1 && token[0] ==' '))
+		{
+			next_pos = str.length();
+			more = false;
+		}
+
+		else
+		{		
+			next_pos = (position[0] + 1);
+			more = true;
+		}
+
+		delete[] word_tmp;
+		delete[] position;
+
+
+		if (field_width < token.length())
+		{
+			field_width = token.length();
+		}
+
+	
+		if (str[0] == delimiter || (del_qty !=0 && token[0] ==' '))
+		{
+			
+			more = 0;
+		
+		//Code to save the record from the task and pass as an throw exception
+		//I made this code because i have a lot of problemns 
+		//in the linux compilation that cant concatenate the strings
+		/////////////////////////////////////////////////////////////
+		std::string record;
+		for (size_t i=0; i<(str.length()-1); i++)
+		{
+		record += str[i];
+		}
+		///////////////////////////////////////////////////////////////
+		//If you are using visual studio environment comment this code above
+		// and remove the comment before the throw execution
+		
+		
+		//std::string record = str;
+		throw std::string(record);
+		}
+		
+	}
+	
+
+	return token;
+
+}
+
+void Utilities::setDelimiter(const char del)
+{
+	delimiter = del;
+}
+
+void Utilities::setLogFile(const char* logfile)
+{
+	std::ofstream file;
+	file.open(logfile);
+}
+
+std::ofstream& Utilities::getLogFile()
+{
+
+	return logFile;
+
+}
+jcoelho-neto@matrix:~/OOP345/Project/m2> main [K[K[K[K[Kcat main.cpp 
+// CustomerOrder Milestone - Main Program
+// Milestone_2.cpp
+// Chris Szalwinski
+// v1.0 - 9/11/2015
+// v1.1 - 9/11/2015 - customerOrder -> customerOrders for g++ 5.2 compatability (CS)
+// v1.2 - 16/11/2015 - add <cstdlib> for exit (CS)
+// v2.0 - 15/01/2016
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <cstdlib>
+#include <vector>
+#include <memory>
+#include "CustomerOrder.h"
+#include "Utilities.h"
+#include "Item.h"
+
+template<typename T>
+void loadFromFile(const char*, std::vector<T>&, std::ostream&);
+
+int main(int argc, char** argv) {
+	// process command line arguments
+	if (argc != 4) {
+		std::cerr << "*** invalid number of arguments ***\n"
+			<< "Usage: " << argv[0] << " customer_order_file item_file delimiter\n";
+		exit(1);
+	}
+	std::cout << "Command Line Arguments\n----------------------\n";
+	std::cout << "Customer Order File Specified = " << argv[1] << "\n";
+	std::cout << "Item File Specified           = " << argv[2] << "\n";
+	std::cout << "File Record Field Delimiter   = " << argv[3][0] << "\n\n";
+	Utilities::setDelimiter(argv[3][0]);
+	// end of command line processing
+
+	// Load, Accept and Display the Customer Orders
+	//
+	std::cout << "\n*** Load and Accept the Customer Orders ***\n";
+	std::vector<CustomerOrder> customerOrders;
+	loadFromFile(argv[1], customerOrders, std::cerr);
+	std::cout << "\nList of Accepted Customer Orders\n--------------------------------\n";
+	for (auto& s : customerOrders)
+		s.display(std::cout);
+
+	// Load, Accept and Display the Items in Stock
+	//
+	std::cout << "\n*** Load and Accept the Items in Stock ***\n";
+	std::vector<Item> items;
+	loadFromFile(argv[2], items, std::cerr);
+	std::cout << "\nList of Items in Stock\n----------------------\n";
+	for (auto& i : items)
+		i.display(std::cout, true);
+
+	// Fill the Customer Orders with the Items in Stock
+	//
+	std::cout << "\n*** Process the Customer Orders ***\n";
+	for (auto& i : items)
+		for (auto& s : customerOrders)
+			s.fill(i);
+
+	// Display the Processed Customer Orders
+	//
+	std::cout << "\nList of Processed Customer Orders\n---------------------------------\n";
+	for (auto& s : customerOrders)
+		s.display(std::cout);
+
+	// Terminate
+	//
+	std::cout << "\nDone!\nPress Enter Key to Exit ... ";
+	char c;
+	std::cin.get(c);
+}
+
+template<typename T>
+void loadFromFile(const char* fileName, std::vector<T>& collection, std::ostream& os) {
+	std::ifstream file(fileName);
+	if (!file) {
+		os << "*** Cannot open file named " << fileName << " ***\n";
+		exit(1);
+	}
+	while (file) {
+		std::string record;
+		std::getline(file, record);
+		if (file) {
+			try {
+				std::unique_ptr<T> entry(new T(record));
+				if (!entry->empty())
+					collection.push_back(std::move(*entry));
+			}
+			catch (const std::string& msg) {
+				os << msg << std::endl;
+			}
+		}
+	}
+}jcoelho-neto@matrix:~/OOP345/Project/m2> cat main.cpp [5@Utilities[C[C[C[C[C[5PItem[C[C[C[C[C[8@Customer[C[C[C[C[C[C[C[C[C[1@Order[C[C[C[C[Cwhoami[Km2 MalformedCustOrder.txt MalformedItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[40Pm2 MalformedCustOrder.txt MalformedItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp
+jcoelho-neto@matrix:~/OOP345/Project/m2> g++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat main.cpp [K[5@Utilities[C[C[C[C[C[5PItem[C[C[C[C[C[8@Customer[C[C[C[C[C[C[C[C[C[1@Order[C[C[C[C[Cwhoami[Km2 MalformedCustOrder.txt MalformedItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[40Pm2 MalformedCustOrder.txt MalformedItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[40Pm2 MalformedCustOrder.txt MalformedItem.txt "|"[2@WhitespaceCustOrder.txt Whitespace[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[38Pm2 WhitespaceCustOrder.txt WhitespaceItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[38Pm2 WhitespaceCustOrder.txt WhitespaceItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[38Pm2 WhitespaceCustOrder.txt WhitespaceItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[38Pm2 WhitespaceCustOrder.txt WhitespaceItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[38Pm2 WhitespaceCustOrder.txt WhitespaceItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[38Pm2 WhitespaceCustOrder.txt WhitespaceItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[38Pm2 WhitespaceCustOrder.txt WhitespaceItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[38Pm2 WhitespaceCustOrder.txt WhitespaceItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[48Pm2 CleanCustOrder.txt CleanItem.txt "|"[10@WhitespaceCustOrder.txt Whitespace[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[10PCleanCustOrder.txt Clean[C[C[C[C[C[C[C[C[C[C[C[C
+Command Line Arguments
+----------------------
+Customer Order File Specified = CleanCustOrder.txt
+Item File Specified           = CleanItem.txt
+File Record Field Delimiter   = |
+
+
+*** Load and Accept the Customer Orders ***
+
+List of Accepted Customer Orders
+--------------------------------
+Fardad Soleimanloo  : Dell Precision 3600
+ - [00000] CPU
+ - [00000] Memory
+ - [00000] Memory
+Joseph Hughes       : HP Z230
+ - [00000] CPU
+ - [00000] Memory
+Chris Szalwinski    : HP Z350
+ - [00000] CPU
+ - [00000] Memory
+ - [00000] SSD
+ - [00000] GPU
+Elliott Coleshill   : HP Apollo 1000
+ - [00000] CPU
+ - [00000] MEMORY
+ - [00000] Power Supply
+ - [00000] GPU
+
+*** Load and Accept the Items in Stock ***
+
+List of Items in Stock
+----------------------
+CPU                     [00300] From CPU                     To Remove CPU
+                              : Central Processing Unit
+Memory                  [00400] From Memory                  To Remove Memory
+                              : Samsung Memory Stick
+GPU                     [00500] From GPU                     To Remove GPU
+                              : Nvidia Geforce 750M
+Power Supply            [00100] From Power Supply            To Remove Power Supply
+                              : no detailed description
+
+*** Process the Customer Orders ***
+
+List of Processed Customer Orders
+---------------------------------
+Fardad Soleimanloo  : Dell Precision 3600
+ + [00300] CPU
+ + [00400] Memory
+ + [00401] Memory
+Joseph Hughes       : HP Z230
+ + [00301] CPU
+ + [00402] Memory
+Chris Szalwinski    : HP Z350
+ + [00302] CPU
+ + [00403] Memory
+ - [00000] SSD
+ + [00500] GPU
+Elliott Coleshill   : HP Apollo 1000
+ + [00303] CPU
+ - [00000] MEMORY
+ + [00100] Power Supply
+ + [00501] GPU
+
+Done!
+Press Enter Key to Exit ... 
+jcoelho-neto@matrix:~/OOP345/Project/m2> m2 CleanCustOrder.txt CleanItem.txt "|"g++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat main.cpp [K[5@Utilities[C[C[C[C[C[5PItem[C[C[C[C[C[8@Customer[C[C[C[C[C[C[C[C[C[1@Order[C[C[C[C[Cwhoami[Km2 MalformedCustOrder.txt MalformedItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[40Pm2 MalformedCustOrder.txt MalformedItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[40Pm2 MalformedCustOrder.txt MalformedItem.txt "|"[2@WhitespaceCustOrder.txt Whitespace[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[38Pm2 WhitespaceCustOrder.txt WhitespaceItem.txt "|"
+Command Line Arguments
+----------------------
+Customer Order File Specified = WhitespaceCustOrder.txt
+Item File Specified           = WhitespaceItem.txt
+File Record Field Delimiter   = |
+
+
+*** Load and Accept the Customer Orders ***
+
+List of Accepted Customer Orders
+--------------------------------
+Fardad Soleimanloo  : Dell Precision 3600
+ - [00000] CPU
+ - [00000] Memory
+ - [00000] Memory
+Joseph Hughes       : HP Z230
+ - [00000] CPU
+ - [00000] Memory
+Chris Szalwinski    : HP Z350
+ - [00000] CPU
+ - [00000] Memory
+ - [00000] SSD
+ - [00000] GPU
+Elliott Coleshill   : HP Apollo 1000
+ - [00000] CPU
+ - [00000] MEMORY
+ - [00000] Power Supply
+ - [00000] GPU
+
+*** Load and Accept the Items in Stock ***
+
+List of Items in Stock
+----------------------
+CPU                     [00300] From CPU                     To Remove CPU
+                              : Central Processing Unit
+Memory                  [00400] From Memory                  To Remove Memory
+                              : Samsung Memory Stick
+GPU                     [00500] From GPU                     To Remove GPU
+                              : Nvidia Geforce 750M
+Power Supply            [00100] From Power Supply            To Remove Power Supply
+                              : no detailed description
+
+*** Process the Customer Orders ***
+
+List of Processed Customer Orders
+---------------------------------
+Fardad Soleimanloo  : Dell Precision 3600
+ + [00300] CPU
+ + [00400] Memory
+ + [00401] Memory
+Joseph Hughes       : HP Z230
+ + [00301] CPU
+ + [00402] Memory
+Chris Szalwinski    : HP Z350
+ + [00302] CPU
+ + [00403] Memory
+ - [00000] SSD
+ + [00500] GPU
+Elliott Coleshill   : HP Apollo 1000
+ + [00303] CPU
+ - [00000] MEMORY
+ + [00100] Power Supply
+ + [00501] GPU
+
+Done!
+Press Enter Key to Exit ... 
+jcoelho-neto@matrix:~/OOP345/Project/m2> m2 WhitespaceCustOrder.txt WhitespaceItem.txt "|"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[10PCleanCustOrder.txt Clean[C[C[C[C[C[C[C[C[C[C[C[Cg++ -std=c++0x -o m2 main.cpp CustomerItem.cpp CustomerOrder.cpp Item.cpp Utilities.cpp[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccat main.cpp [K[5@Utilities[C[C[C[C[C[5PItem[C[C[C[C[C[8@Customer[C[C[C[C[C[C[C[C[C[1@Order[C[C[C[C[Cwhoami[Km2 MalformedCustOrder.txt MalformedItem.txt "|"
+Command Line Arguments
+----------------------
+Customer Order File Specified = MalformedCustOrder.txt
+Item File Specified           = MalformedItem.txt
+File Record Field Delimiter   = |
+
+
+*** Load and Accept the Customer Orders ***
+|||<-- *** no token found before the delimiter ***
+| Peter McIntyre     |<-- *** no token found before the delimiter ***
+
+List of Accepted Customer Orders
+--------------------------------
+Fardad Soleimanloo  : Dell Precision 3600
+ - [00000] CPU
+ - [00000] Memory
+ - [00000] Memory
+Joseph Hughes       : HP Z230
+ - [00000] CPU
+ - [00000] Memory
+Chris Szalwinski    : HP Z350
+ - [00000] CPU
+ - [00000] Memory
+ - [00000] SSD
+ - [00000] GPU
+Elliott Coleshill   : HP Apollo 1000
+ - [00000] CPU
+ - [00000] MEMORY
+ - [00000] Power Supply
+ - [00000] GPU
+
+*** Load and Accept the Items in Stock ***
+||<-- *** no token found before the delimiter ***
+|Fan|Fan| Place fan       |900| CoolMasters R56|||<-- *** no token found before the delimiter ***
+ | | | | |<-- *** no token found before the delimiter ***
+||PCIe SSD|<-- *** no token found before the delimiter ***
+
+List of Items in Stock
+----------------------
+CPU                     [00300] From CPU                     To Remove CPU
+                              : Central Processing Unit
+Memory                  [00400] From Memory                  To Remove Memory
+                              : Samsung Memory Stick
+GPU                     [00500] From GPU                     To Remove GPU
+                              : Nvidia Geforce 750M
+Power Supply            [00100] From Power Supply            To Remove Power Supply
+                              : no detailed description
+
+*** Process the Customer Orders ***
+
+List of Processed Customer Orders
+---------------------------------
+Fardad Soleimanloo  : Dell Precision 3600
+ + [00300] CPU
+ + [00400] Memory
+ + [00401] Memory
+Joseph Hughes       : HP Z230
+ + [00301] CPU
+ + [00402] Memory
+Chris Szalwinski    : HP Z350
+ + [00302] CPU
+ + [00403] Memory
+ - [00000] SSD
+ + [00500] GPU
+Elliott Coleshill   : HP Apollo 1000
+ + [00303] CPU
+ - [00000] MEMORY
+ + [00100] Power Supply
+ + [00501] GPU
+
+Done!
+Press Enter Key to Exit ... 
+jcoelho-neto@matrix:~/OOP345/Project/m2> exit
+exit
+
+Script done on Tue 27 Mar 2018 06:39:34 PM EDT
